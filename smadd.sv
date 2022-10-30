@@ -24,6 +24,8 @@ module smadd(input  logic [3:0] a, b,
   or     gs(sameoutsign, cinb, cout);
   mux2_3 mymux(sameoutsign, mrb, mr, my);
   mux2   symux(sameoutsign, sb, sa, sy);
+  initial
+    $display("%m size == %d", 9 + 2 + 5);
   
   // reassemble output
   assign y = {sy, my};
@@ -35,6 +37,8 @@ module not_3(input  logic [2:0] a,
   not n0(y[0], a[0]);
   not n1(y[1], a[1]);
   not n2(y[2], a[2]);
+  initial
+    $display("%m size == %d", 2*3);
 endmodule
 
 module xor_3(input  logic       a,
@@ -44,6 +48,8 @@ module xor_3(input  logic       a,
   xor x0(y[0], a, b[0]);
   xor x1(y[1], a, b[1]);
   xor x2(y[2], a, b[2]);
+  initial
+    $display("%m size == %d", 9 * 3);
 endmodule
 
 module mux2_3(input  logic       s,
@@ -65,6 +71,8 @@ module mux2(input  logic s,
   and ga0(a0, sb, d0);
   and ga1(a1, s, d1);
   or  go1(y, a0, a1);
+  initial
+    $display("%m size == %d", 2 + 2*5 + 5);
 endmodule
 
 module add_3(input  logic [2:0] a, b,
@@ -93,6 +101,9 @@ module fulladder(input  logic a, b, cin,
   and ga2(n2, a, cin);
   and ga3(n3, b, cin);
   or  go1(cout, n1, n2, n3);
+
+  initial
+    $display("%m size == %d", 9 * 2 + 3 * 5 + 6);
 endmodule
 
 module incr(input  logic [2:0] a,
@@ -104,6 +115,8 @@ module incr(input  logic [2:0] a,
   xor       hax1(s[1], a[1], a[0]);
   and       haa1(c1, a[1], a[0]);
   xor       hax2(s[2], a[2], c1);
+  initial
+    $display("%m size == %d", 2 + 9 * 2 + 5);
 endmodule
 
 module testbench(); 
