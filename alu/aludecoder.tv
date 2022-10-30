@@ -1,0 +1,14 @@
+// aludec.tv
+// trao@g.hmc.edu 14 January 2020
+// Upadated for RISC-V Architecture
+//
+// ALUOp[1:0] funct3[2:0] op_5 funct7_5 _ ALUControl[2:0]
+00xxxxx_000
+01xxxxx_001
+1000000_000
+1000001_000
+1000010_000
+1000011_001
+10010xx_101
+10110xx_011
+10111xx_010

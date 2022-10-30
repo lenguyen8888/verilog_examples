@@ -3,6 +3,17 @@ module fsm(input  logic clk, reset,
            output logic q);
            
     // your code goes here
+    logic [1:0] state;
+    always_ff @(posedge clk)
+    begin
+        if(reset)
+            state <= '0;
+        else begin
+            state[1] <= ~a & state[1] | ~a & ~state[0] | state[1] & ~state[0];
+            state[0] <= ~state[0] & ~state[1] | (a & ~(state[0] & state[1]));
+        end
+    end
+    assign q = state[1] ^ state[0];
 endmodule
 
 

@@ -1,3 +1,6 @@
 *.swp
 *~
 work/
+*.bak
+*.wlf
+transcript
