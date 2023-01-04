@@ -23,7 +23,7 @@
 
 // 31 32-bit registers x1-x31, x0 hardwired to 0
 // R-Type instructions
-//   add, sub, and, or, slt
+//   add, sub, and, or, slt, sll
 //   INSTR rd, rs1, rs2
 //   Instr[31:25] = funct7 (funct7b5 & opb5 = 1 for sub, 0 for others)
 //   Instr[24:20] = rs2
@@ -107,7 +107,7 @@ module testbench();
   always @(negedge clk)
     begin
       if(MemWrite) begin
-        if(DataAdr === 100 & WriteData === 25) begin
+        if(DataAdr === 100 & WriteData === 50) begin
           $display("Simulation succeeded");
           #1; // wait to be sure hash is ready
  	   	  $display("hash = %h", hash);
@@ -229,6 +229,7 @@ module aludec(input  logic       opb5,
                             ALUControl = 3'b001; // sub
                           else          
                             ALUControl = 3'b000; // add, addi
+                 3'b001:    ALUControl = 3'b100; // sll, sli
                  3'b010:    ALUControl = 3'b101; // slt, slti
                  3'b110:    ALUControl = 3'b011; // or, ori
                  3'b111:    ALUControl = 3'b010; // and, andi
@@ -346,8 +347,10 @@ module imem(input  logic [31:0] a,
 
   logic [31:0] RAM[63:0];
 
-  initial
-      $readmemh("riscvtest.txt",RAM);
+  initial begin
+      //$readmemh("riscvtest.txt",RAM);
+      $readmemh("riscvtest_sll.txt",RAM);
+  end
 
   assign rd = RAM[a[31:2]]; // word aligned
 endmodule
@@ -380,6 +383,7 @@ module alu(input  logic [31:0] a, b,
       3'b001:  result = sum;       // subtract
       3'b010:  result = a & b;     // and
       3'b011:  result = a | b;     // or
+      3'b100:  result = a << b[4:0]; // sll
       3'b101:  result = sum[31];   // slt
       default: result = 32'bx;
     endcase
