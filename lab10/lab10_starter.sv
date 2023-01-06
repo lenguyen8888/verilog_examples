@@ -147,7 +147,10 @@ module riscvmulti(input  logic        clk, reset,
         ,.RegWrite   (RegWrite  )
         ,.MemWrite   (MemWrite  )
         );
-  datapath dp (
+  // Can use either datapath_dataflow or datapath_struct in this design
+  // datapath_dataflow is the initial implementation, later converted to
+  // structural design in datapath_struct
+  datapath_struct dp (
          .clk        (clk       )
         ,.reset      (reset     )
         ,.PCWrite    (PCWrite   )
@@ -399,7 +402,67 @@ module aludecoder(input  logic [1:0] ALUOp,
                         3'bxxx;
 endmodule
 
-module datapath(input  logic        clk, reset,
+module datapath_struct(
+                input  logic        clk, reset,
+
+                input  logic        PCWrite, AdrSrc, MemWrite, IRWrite,
+
+                input  logic [1:0]  ResultSrc, 
+                input  logic [2:0]  ALUControl,
+                input  logic [1:0]  ALUSrcA, ALUSrcB,
+                input  logic [1:0]  ImmSrc,
+                input  logic        RegWrite,
+
+                output logic        Zero,
+                output logic [31:0] WriteData,
+                input  logic [31:0] ReadData,
+
+                output logic [31:0]  DataAdr,
+                output logic [31:0]  Instr
+                );
+
+  logic [31:0] PC, PCNext;
+  logic [31:0] ImmExt;
+  logic [31:0] SrcA, SrcB;
+  logic [31:0] Result;
+
+  logic [31:0] ALUResult, ALUOut;
+
+  logic [31:0] OldPC, A, RD1, RD2;
+  logic [31:0] Data;
+
+  // next PC logic
+  // flopr_ld port list (clk, reset, load, d, q);
+  flopr_ld #(32) pcReg    (clk, reset, PCWrite, PCNext, PC); 
+  flopr_ld #(32) instrReg (clk, reset, IRWrite, ReadData, Instr); 
+  flopr_ld #(32) oldPCReg (clk, reset, IRWrite, PC, OldPC); 
+
+  // flopr port list (clk, reset, d, q);
+  flopr #(32) aReg          (clk, reset, RD1, A); 
+  flopr #(32) writeDataReg  (clk, reset, RD2, WriteData); 
+  flopr #(32) aluOutReg     (clk, reset, ALUResult, ALUOut); 
+  flopr #(32) dataReg       (clk, reset, ReadData, Data); 
+
+  // mux2 port list (d0, d1, s, y)
+  mux2 #(32) dataAdrMux (PC, Result, AdrSrc, DataAdr);
+
+  // register file logic
+  regfile     rf(clk, RegWrite, Instr[19:15], Instr[24:20], 
+                 Instr[11:7], Result, RD1, RD2);
+  extend      ext(Instr[31:7], ImmSrc, ImmExt);
+
+  // ALU logic
+  alu         alu(SrcA, SrcB, ALUControl, ALUResult, Zero);
+
+  // mux3 port list (d0, d1, d2, s, y)
+  mux3 #(32) srcAMux (PC, OldPC, A, ALUSrcA, SrcA);
+  mux3 #(32) srcBMux (WriteData, ImmExt, 32'h4, ALUSrcB, SrcB);
+  mux3 #(32) resultMux (ALUOut, Data, ALUResult, ResultSrc, Result);
+
+  assign PCNext = Result;
+endmodule
+
+module datapath_dataflow(input  logic        clk, reset,
 
                 input  logic        PCWrite, AdrSrc, MemWrite, IRWrite,
 
@@ -530,6 +593,17 @@ module flopr #(parameter WIDTH = 8)
   always_ff @(posedge clk, posedge reset)
     if (reset) q <= 0;
     else       q <= d;
+endmodule
+
+module flopr_ld #(parameter WIDTH = 8)
+              (input  logic             clk, reset,
+               input  logic load,
+               input  logic [WIDTH-1:0] d, 
+               output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk, posedge reset)
+    if (reset) q <= 0;
+    else if(load) q <= d;
 endmodule
 
 module mux2 #(parameter WIDTH = 8)
