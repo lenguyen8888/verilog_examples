@@ -12,7 +12,7 @@ typedef enum logic[6:0] {r_type_op=7'b0110011, i_type_alu_op=7'b0010011, lw_op=7
 
 module controller(input  logic       clk,
                   input  logic       reset,  
-                  input  opcodetype  op,
+                  input  logic[6:0]  op_in,
                   input  logic [2:0] funct3,
                   input  logic       funct7b5,
                   input  logic       Zero,
@@ -35,18 +35,18 @@ module controller(input  logic       clk,
   } stateEnum;
   stateEnum stateR;
 
+  opcodetype op;
+
+  assign op = opcodetype'(op_in);
   logic PCUpdate, Branch;
 
   logic [1:0] ALUOp;
 
   assign PCWrite = PCUpdate | Branch & Zero;
 
-  logic [6:0] binary_op;
-  assign binary_op = op;
-
   aludecoder dec (.ALUOp(ALUOp)
                   ,.funct3(funct3)
-                  ,.op_5(binary_op[5])
+                  ,.op_5(op_in[5])
                   ,.funct7_5(funct7b5)
                   ,.ALUControl(ALUControl));
 
@@ -137,7 +137,7 @@ module controller(input  logic       clk,
         end
       endcase
   end
-  always @(posedge clk)
+  always_ff @(posedge clk)
   begin
     if(reset) begin
       stateR  <= S0_Fetch;
