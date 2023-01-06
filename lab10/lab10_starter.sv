@@ -417,7 +417,7 @@ module datapath(input  logic        clk, reset,
                 output logic [31:0]  Instr
                 );
 
-  logic [31:0] PC, PCNext, PCPlus4, PCTarget;
+  logic [31:0] PC, PCNext;
   logic [31:0] ImmExt;
   logic [31:0] SrcA, SrcB;
   logic [31:0] Result;
@@ -434,19 +434,19 @@ module datapath(input  logic        clk, reset,
     if(reset) begin
       PC <= '0;
       Instr <= '0;
+      OldPC <= '0;
     end
     else begin
       if(PCWrite)
         PC <= PCNext;
-      if(IRWrite)
+      if(IRWrite) begin
         Instr <= ReadData;
+        OldPC <= PC;
+      end
     end
   end
 
   always_ff @(posedge clk) begin
-    if(IRWrite) begin
-      OldPC <= PC;
-    end
     A <= RD1;
     WriteData <= RD2;
     ALUOut <= ALUResult;
